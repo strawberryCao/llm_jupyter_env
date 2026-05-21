@@ -1,0 +1,18 @@
+[project]
+name = "llm-jupyter-env"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dotenv>=0.9.9",
+    "fastmcp>=3.2.4",
+    "ipykernel>=7.2.0",
+    "langchain-core>=1.4.0",
+    "langchain-deepseek>=1.0.1",
+    "langchain-mcp-adapters>=0.2.2",
+    "langchain-tavily>=0.2.18",
+    "mcp>=1.27.1",
+    "openai>=2.36.0",
+    "python-dotenv>=1.2.2",
+]
