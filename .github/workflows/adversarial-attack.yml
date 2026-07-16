@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - '.github/workflows/adversarial-attack.yml'
+  pull_request:
+    paths:
+      - 'run-adversarial-attack.txt'
   workflow_dispatch:
 
 permissions:
