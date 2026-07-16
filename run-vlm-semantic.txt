@@ -1,0 +1,1 @@
+Run cloud multimodal VLM semantic and visual-prompt-injection evaluation for the uploaded dog image.
