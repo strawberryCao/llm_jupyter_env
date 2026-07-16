@@ -2,3 +2,4 @@ Trigger one-time ImageNet adversarial attack for the uploaded dog image.
 Retry after fixing the cloud workflow setup.
 Retry with stderr capture and NumPy compatibility pin.
 Retry with tolerant JPEG recovery before optimization.
+Final retry with integrity-verified complete source image.
