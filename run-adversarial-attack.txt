@@ -1,1 +1,2 @@
 Trigger one-time ImageNet adversarial attack for the uploaded dog image.
+Retry after fixing the cloud workflow setup.
