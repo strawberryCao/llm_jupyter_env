@@ -28,27 +28,29 @@ jobs:
           python -m pip install --index-url https://download.pytorch.org/whl/cpu torch==2.5.1 torchvision==0.20.1
           python -m pip install 'numpy<2' pillow
 
-      - name: Stage one-time attack inputs
+      - name: Stage verified attack inputs
         run: |
           python - <<'PY'
-          import base64, json, urllib.request
+          import base64, hashlib, json, urllib.request
           repo = 'strawberryCao/llm_jupyter_env'
           def blob(sha):
               url = f'https://api.github.com/repos/{repo}/git/blobs/{sha}'
               with urllib.request.urlopen(url) as response:
                   payload = json.load(response)
               return base64.b64decode(payload['content'].replace('\n', ''))
-          script = blob('7c71390ff44ada9134c2b0af77879fb985f7b2c9').decode('utf-8')
-          script = script.replace(
-              'from PIL import Image',
-              'from PIL import Image, ImageFile\nImageFile.LOAD_TRUNCATED_IMAGES=True'
-          )
-          open('/tmp/attack.py', 'w', encoding='utf-8').write(script)
-          open('/tmp/input.jpg', 'wb').write(
-              blob('612db87af62a133695969f9f664143904823c8f4') +
-              blob('2b5b659283e72bdb0b550e084c6be0b365c5ca54')
-          )
-          print('Attack script and recoverable image staged.')
+          open('/tmp/attack.py', 'wb').write(blob('7c71390ff44ada9134c2b0af77879fb985f7b2c9'))
+          image = b''.join(blob(sha) for sha in [
+              '90e6a75422eb0fc6d823a296098830b5e4868eeb',
+              '5d35ad32b5b74a9440d115e6d21bcc8b553f7dcf',
+              'fce4f0b47ea88cb6d2d3de0153d79f084ef8fae5',
+              '4a65c32e409345e2adb155f8f1154644fe2498da',
+          ])
+          digest = hashlib.sha256(image).hexdigest()
+          expected = '837468e1264b669180d8b8537b004d45a531fe494eb87cbb1b7071ba9d2d770a'
+          if digest != expected:
+              raise RuntimeError(f'Image integrity mismatch: {digest}')
+          open('/tmp/input.jpg', 'wb').write(image)
+          print(f'Attack image integrity verified: {digest}')
           PY
 
       - name: Run real ImageNet white-box attack
