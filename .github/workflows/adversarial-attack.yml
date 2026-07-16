@@ -38,12 +38,17 @@ jobs:
               with urllib.request.urlopen(url) as response:
                   payload = json.load(response)
               return base64.b64decode(payload['content'].replace('\n', ''))
-          open('/tmp/attack.py', 'wb').write(blob('7c71390ff44ada9134c2b0af77879fb985f7b2c9'))
+          script = blob('7c71390ff44ada9134c2b0af77879fb985f7b2c9').decode('utf-8')
+          script = script.replace(
+              'from PIL import Image',
+              'from PIL import Image, ImageFile\nImageFile.LOAD_TRUNCATED_IMAGES=True'
+          )
+          open('/tmp/attack.py', 'w', encoding='utf-8').write(script)
           open('/tmp/input.jpg', 'wb').write(
               blob('612db87af62a133695969f9f664143904823c8f4') +
               blob('2b5b659283e72bdb0b550e084c6be0b365c5ca54')
           )
-          print('Attack script and image staged.')
+          print('Attack script and recoverable image staged.')
           PY
 
       - name: Run real ImageNet white-box attack
