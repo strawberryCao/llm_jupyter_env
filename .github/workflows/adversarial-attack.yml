@@ -1,4 +1,4 @@
-name: ImageNet adversarial attack
+name: ImageNet black-box adversarial attack
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - '.github/workflows/adversarial-attack.yml'
   pull_request:
     paths:
-      - 'run-adversarial-attack.txt'
+      - 'run-blackbox-attack.txt'
   workflow_dispatch:
 
 permissions:
@@ -21,15 +21,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
-      - name: Install CPU PyTorch environment
+      - name: Install preconfigured PyTorch environment
         run: |
           python -m pip install --upgrade pip
           python -m pip install --index-url https://download.pytorch.org/whl/cpu torch==2.5.1 torchvision==0.20.1
-          python -m pip install pillow
+          python -m pip install 'numpy<2' pillow
 
-      - name: Stage one-time attack inputs
+      - name: Stage black-box attack inputs
         run: |
           python - <<'PY'
           import base64, json, urllib.request
@@ -39,27 +38,27 @@ jobs:
               with urllib.request.urlopen(url) as response:
                   payload = json.load(response)
               return base64.b64decode(payload['content'].replace('\n', ''))
-          open('/tmp/attack.py', 'wb').write(blob('7c71390ff44ada9134c2b0af77879fb985f7b2c9'))
+          open('/tmp/blackbox_attack.py', 'wb').write(blob('408f891da27b927553394f005f2887162f3c3b62'))
           open('/tmp/input.jpg', 'wb').write(
               blob('612db87af62a133695969f9f664143904823c8f4') +
               blob('2b5b659283e72bdb0b550e084c6be0b365c5ca54')
           )
-          print('Attack script and image staged.')
+          print('Black-box script and input staged.')
           PY
 
-      - name: Run real ImageNet white-box attack
+      - name: Run score-query black-box attack
         run: |
-          python /tmp/attack.py | tee /tmp/attack.log
+          python /tmp/blackbox_attack.py | tee /tmp/blackbox.log
 
-      - name: Upload verified adversarial sample
+      - name: Upload verified black-box result
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: imagenet-adversarial-result
+          name: imagenet-blackbox-adversarial-result
           path: |
-            /tmp/adv.png
-            /tmp/result.json
-            /tmp/attack.log
+            /tmp/blackbox_adv.png
+            /tmp/blackbox_result.json
+            /tmp/blackbox.log
             /tmp/input.jpg
           if-no-files-found: warn
           retention-days: 7
