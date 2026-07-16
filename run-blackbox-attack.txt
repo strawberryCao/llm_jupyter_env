@@ -1,0 +1,1 @@
+Trigger strict score-query black-box ImageNet attack for the uploaded dog image.
