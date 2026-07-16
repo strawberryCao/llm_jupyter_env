@@ -1,0 +1,75 @@
+name: Multimodal VLM semantic attack evaluation
+
+on:
+  push:
+    paths:
+      - '.github/workflows/vlm-semantic-attack.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      HF_HOME: /tmp/hf-cache
+      HF_HUB_DISABLE_XET: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PyTorch and VLM dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu torch==2.5.1 torchvision==0.20.1
+          python -m pip install 'numpy<2' pillow transformers==4.48.3 accelerate safetensors sentencepiece
+
+      - name: Stage verified image and experiment
+        run: |
+          python - <<'PY'
+          import base64, hashlib, json, urllib.request
+          repo = 'strawberryCao/llm_jupyter_env'
+          def blob(sha):
+              url = f'https://api.github.com/repos/{repo}/git/blobs/{sha}'
+              with urllib.request.urlopen(url) as response:
+                  payload = json.load(response)
+              return base64.b64decode(payload['content'].replace('\n', ''))
+          open('/tmp/vlm_attack.py', 'wb').write(blob('21bbe2471b980a10c126d3da2edc560737485493'))
+          image = b''.join(blob(sha) for sha in [
+              '90e6a75422eb0fc6d823a296098830b5e4868eeb',
+              '5d35ad32b5b74a9440d115e6d21bcc8b553f7dcf',
+              'fce4f0b47ea88cb6d2d3de0153d79f084ef8fae5',
+              '4a65c32e409345e2adb155f8f1154644fe2498da',
+          ])
+          digest = hashlib.sha256(image).hexdigest()
+          expected = '837468e1264b669180d8b8537b004d45a531fe494eb87cbb1b7071ba9d2d770a'
+          if digest != expected:
+              raise RuntimeError(f'Image integrity mismatch: {digest}')
+          open('/tmp/vlm_input.jpg', 'wb').write(image)
+          print(f'Input integrity verified: {digest}')
+          PY
+
+      - name: Run multimodal semantic attack search
+        shell: bash
+        run: |
+          set -o pipefail
+          python /tmp/vlm_attack.py 2>&1 | tee /tmp/vlm_attack.log
+
+      - name: Upload VLM experiment results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vlm-semantic-attack-result
+          path: |
+            /tmp/vlm_best.png
+            /tmp/vlm_report.json
+            /tmp/vlm_attack.log
+            /tmp/vlm_input.jpg
+            /tmp/vlm_out
+          if-no-files-found: warn
+          retention-days: 7
