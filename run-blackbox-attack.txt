@@ -1,1 +1,2 @@
 Trigger strict score-query black-box ImageNet attack for the uploaded dog image.
+Run: 2026-07-16T18:00+08:00
