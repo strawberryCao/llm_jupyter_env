@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - '.github/workflows/vlm-semantic-attack.yml'
+  pull_request:
+    paths:
+      - 'run-vlm-semantic.txt'
   workflow_dispatch:
 
 permissions:
